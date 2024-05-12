@@ -1,44 +1,50 @@
 <?php
 namespace TurgunboyevUz\SPDO\Core;
 
-class Translations{
-    public static $items = [];
-    public static $locale = '';
+class Translations {
+    private static $items = [];
+    private static $currentLocale;
 
-    public static function load($folder){
-        $files = glob($folder."/language/*.php");
+    public static function load($folder) {
+        $files = glob($folder . '/languages/*.php');
 
         foreach ($files as $filename) {
-            $file = str_replace('.php', '', $filename);
-            $ex = explode('/', $file);
-
-            $config_name = end($ex);
-
-            self::$items[$config_name] = require $filename;
+            $locale = basename($filename, '.php');
+            self::$items[$locale] = require $filename;
         }
     }
 
-    public static function get($key, $value){
-        $items = self::$items;
-        $key = explode('.', self::$locale.'.'.$key);
+    public static function get($key, array $vars = [], $default = null) {
+        $locale = self::$currentLocale ?? array_keys(self::$items)[0];
+        $translation = self::$items[$locale] ?? [];
 
-        foreach($key as $segment){
-            if (!is_array($items) || !array_key_exists($segment, $items)) {
-                return $value;
+        $segments = explode('.', $key);
+
+        foreach ($segments as $segment) {
+            if (!is_array($translation) || !array_key_exists($segment, $translation)) {
+                return self::replaceVars($default, $vars);
             }
-    
-            $items = $items[$segment];
+
+            $translation = $translation[$segment];
         }
 
-        return $items;
+        return self::replaceVars($translation, $vars);
     }
 
-    public static function locale($locale){
-        if(!array_key_exists($locale, self::$items)){
+    public static function locale($locale) {
+        if (!array_key_exists($locale, self::$items)) {
             return false;
         }
-        
-        return self::$locale = $locale;
+
+        self::$currentLocale = $locale;
+        return true;
+    }
+
+    private static function replaceVars(string $text, array $vars) {
+        foreach ($vars as $key => $value) {
+            $text = str_replace('{' . $key . '}', $value, $text);
+        }
+
+        return $text;
     }
 }
-?>

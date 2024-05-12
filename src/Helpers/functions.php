@@ -28,6 +28,6 @@ function locale($value){
     return Translations::locale($value);
 }
 
-function lang($key, $value = null){
-    return Translations::get($key, $value);
+function lang($key, $vars = [], $default = null){
+    return Translations::get($key, $vars, $default);
 }
